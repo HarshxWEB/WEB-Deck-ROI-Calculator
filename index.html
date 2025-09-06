@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Rental ROI Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A two-panel dashboard layout was chosen for optimal usability. The left panel contains all user-configurable inputs (sliders and number fields), clearly separating user actions from results. The right panel displays all outputs—key metrics in prominent KPI cards for a quick overview, a comparative line chart visualizing ROI over time, and a detailed data table for deeper analysis. This structure supports an intuitive user flow: the user adjusts an input on the left and immediately sees the updated results on the right, facilitating rapid scenario exploration and comparison, which is the core task of an ROI calculator. -->
+    <!-- Visualization & Content Choices: 
+        - Property Inputs (Area, Price, Utilization): Report Info -> User Variables. Goal -> Input. Viz -> HTML Sliders & Number Inputs. Interaction -> Real-time update of all calculations on input change. Justification -> More interactive and intuitive than a static spreadsheet. Method -> Vanilla JS.
+        - Key Metrics (ROI, Breakeven): Report Info -> Calculated Outputs. Goal -> Inform/Compare. Viz -> Styled KPI Cards. Interaction -> Dynamic text update. Justification -> Highlights most critical results for quick assessment. Method -> Vanilla JS.
+        - ROI Trend: Report Info -> Monthly ROI data. Goal -> Analyze Change/Compare Scenarios. Viz -> Line Chart. Interaction -> Chart redraws on input change; tooltips on hover. Justification -> The best method to visualize trends over time and identify the breakeven point. Library -> Chart.js (Canvas).
+        - Monthly Breakdown: Report Info -> Monthly ROI table. Goal -> Organize/Inform. Viz -> HTML Table. Interaction -> Data regenerates on input change; toggle to switch between scenarios. Justification -> Provides granular data for users who need details behind the visualization. Method -> Vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4f46e5;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .slider-thumb::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #4f46e5;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+             <div class="flex items-center justify-center mb-4">
+                <img src="Web Logo.jpg" alt="WEB Deck Logo" class="h-12 w-auto mr-4">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-900">WEB Systems® International — Rental ROI Calculator</h1>
+                    <p class="text-lg font-semibold text-gray-700">WEB Deck® Rental Modelling</p>
+                </div>
+            </div>
+            <p class="mt-2 text-gray-600">Adjust inputs (area, rates, utilization, tenure, currency) to estimate breakeven and ROI.</p>
+        </header>
+
+        <main class="flex flex-col md:flex-row gap-8">
+            
+            <aside class="w-full md:w-1/3 lg:w-1/4 bg-white p-6 rounded-2xl shadow-lg h-fit">
+                <h2 class="text-xl font-bold mb-6 border-b pb-3">Investment Parameters</h2>
+                
+                <div class="space-y-6">
+
+                    <div>
+                        <h3 class="block text-sm font-medium text-gray-700 mb-2">Select Investment Currency</h3>
+                         <div class="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-lg">
+                            <button id="currency-gbp-btn" class="px-3 py-1 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow">GBP</button>
+                            <button id="currency-usd-btn" class="px-3 py-1 text-sm font-semibold text-gray-600 bg-transparent rounded-md">USD</button>
+                            <button id="currency-eur-btn" class="px-3 py-1 text-sm font-semibold text-gray-600 bg-transparent rounded-md">EUR</button>
+                            <button id="currency-inr-btn" class="px-3 py-1 text-sm font-semibold text-gray-600 bg-transparent rounded-md">INR</button>
+                            <button id="currency-aud-btn" class="px-3 py-1 text-sm font-semibold text-gray-600 bg-transparent rounded-md">AUD</button>
+                            <button id="currency-cad-btn" class="px-3 py-1 text-sm font-semibold text-gray-600 bg-transparent rounded-md">CAD</button>
+                            <button id="currency-nok-btn" class="px-3 py-1 text-sm font-semibold text-gray-600 bg-transparent rounded-md">NOK</button>
+                            <button id="currency-nzd-btn" class="px-3 py-1 text-sm font-semibold text-gray-600 bg-transparent rounded-md">NZD</button>
+                            <button id="currency-aed-btn" class="px-3 py-1 text-sm font-semibold text-gray-600 bg-transparent rounded-md">AED</button>
+                            <button id="currency-qar-btn" class="px-3 py-1 text-sm font-semibold text-gray-600 bg-transparent rounded-md">QAR</button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="area" class="block text-sm font-medium text-gray-700">Total Area (sqm)</label>
+                        <div class="flex items-center gap-4 mt-2">
+                            <input type="range" id="area-slider" min="50" max="1000" value="200" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                            <input type="number" id="area-input" value="200" class="w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label id="price-label" for="price-input" class="block text-sm font-medium text-gray-700">Estimated SQM Purchase value (£)</label>
+                        <div class="relative mt-2">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                              <span id="price-currency-symbol" class="text-gray-500 sm:text-sm">£</span>
+                            </div>
+                            <input type="number" id="price-input" value="121500" class="block w-full rounded-md border-gray-300 pl-7 pr-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="utilization" class="block text-sm font-medium text-gray-700">Rental Utilization Rate</label>
+                        <div class="flex items-center gap-4 mt-2">
+                            <input type="range" id="utilization-slider" min="10" max="100" value="80" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                            <span id="utilization-value" class="font-semibold text-indigo-600 w-12 text-right">80%</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="rental-duration-input" class="block text-sm font-medium text-gray-700">Rental Duration (Months)</label>
+                        <div class="flex items-center gap-4 mt-2">
+                            <input type="range" id="rental-duration-slider" min="1" max="120" value="24" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                            <input type="number" id="rental-duration-input" value="24" class="w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        </div>
+                    </div>
+                    
+                    <div class="border-t pt-6">
+                        <h3 id="rental-scenarios-header" class="text-lg font-semibold mb-4">Rental Rates Scenario</h3>
+                         <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label id="low-rate-label" for="low-rate-input" class="block text-sm font-medium text-gray-700">Min. Rate<br>(£/sqm/day)</label>
+                                <p class="text-gray-500 text-xs mt-1 mb-1">Enter Value:</p>
+                                <input type="number" id="low-rate-input" value="1.005" step="0.001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            </div>
+                            <div>
+                                <label id="high-rate-label" for="high-rate-input" class="block text-sm font-medium text-gray-700">Max Rate<br>(£/sqm/day)</label>
+                                <p class="text-gray-500 text-xs mt-1 mb-1">Enter Value:</p>
+                                <input type="number" id="high-rate-input" value="1.50" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="w-full md:w-2/3 lg:w-3/4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white p-4 rounded-xl shadow">
+                        <h4 class="font-semibold text-gray-500 text-sm">Breakeven (Min. Rate)</h4>
+                        <p id="breakeven-low" class="text-2xl font-bold text-indigo-600 mt-1">-- months</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow">
+                        <h4 class="font-semibold text-gray-500 text-sm">Breakeven (Max. Rate)</h4>
+                        <p id="breakeven-high" class="text-2xl font-bold text-amber-600 mt-1">-- months</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow">
+                        <h4 id="roi-low-label" class="font-semibold text-gray-500 text-sm">-- Month ROI (Min. Rate)</h4>
+                        <p id="roi-low" class="text-2xl font-bold text-indigo-600 mt-1">-- %</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow">
+                        <h4 id="roi-high-label" class="font-semibold text-gray-500 text-sm">-- Month ROI (Max. Rate)</h4>
+                        <p id="roi-high" class="text-2xl font-bold text-amber-600 mt-1">-- %</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg">
+                     <h3 class="text-lg font-bold mb-4">Cumulative ROI Over Time</h3>
+                     <p class="text-sm text-gray-600 mb-4">This chart projects the cumulative Return on Investment for both rental scenarios over a 96-month period. The point where a line crosses the 0% axis indicates the breakeven point for that scenario.</p>
+                    <div class="chart-container w-full h-96 max-h-[450px] mx-auto">
+                        <canvas id="roiChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg mt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold">Monthly Data Breakdown</h3>
+                            <p class="text-sm text-gray-600">Explore the detailed financial projections for each scenario month by month.</p>
+                        </div>
+                        <div class="flex items-center space-x-2 bg-gray-100 p-1 rounded-lg">
+                            <button id="table-low-btn" class="px-3 py-1 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow">Min. Rate</button>
+                            <button id="table-high-btn" class="px-3 py-1 text-sm font-semibold text-gray-600 bg-transparent rounded-md">Max. Rate</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" id="table-header-monthly-revenue">Monthly Revenue</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" id="table-header-total-revenue">Total Revenue</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cumulative ROI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roi-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="mt-8 pt-6 border-t border-gray-200">
+            <div class="p-4 rounded-2xl bg-gray-100 shadow-inner">
+                <h3 class="text-xl font-bold mb-4 text-gray-800">Disclaimers</h3>
+                <div class="text-sm text-gray-600 space-y-4">
+                    <p><span class="font-bold">Illustrative only.</span> Outputs are estimates, not quotations, offers, or financial advice.</p>
+                    <p><span class="font-bold">Breakeven definition.</span> For this tool, breakeven month = month when cumulative gross rental revenue equals initial equipment cost. It excludes operating expenses and other costs.</p>
+                    <p><span class="font-bold">Costs not included.</span> Results exclude shipping (sea/air), customs/duties, insurance, installation/mobilization, training/certification, manpower, storage, maintenance/repairs, spares, financing/interest, depreciation, FX/transaction fees, taxes, and any project-specific engineering or contingencies.</p>
+                    <p><span class="font-bold">Assumptions matter.</span> Actual utilization, rental rates, seasonality, downtime, and local regulations can materially change outcomes.</p>
+                    <p><span class="font-bold">Currency.</span> If currency conversion is used, exchange rates are static and may be delayed. Verify rates before relying on results.</p>
+                    <p><span class="font-bold">No guarantees.</span> Past performance or sample scenarios do not guarantee future results; use your own due diligence and consult finance/tax advisors.</p>
+                    <p><span class="font-bold">Data.</span> Entered values are for calculation only. If you export/share results, ensure compliance with your organization’s data policies.</p>
+                </div>
+                <div class="text-xs text-gray-500 mt-6 pt-4 border-t border-gray-300">
+                    <p>Version: v1.0 — 06 Sep 2025</p>
+                    <p>© 2025 WEB Systems® International. WEB Systems®, WEB Deck®, and related marks are trademarks of WEB Systems® International. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const areaSlider = document.getElementById('area-slider');
+            const areaInput = document.getElementById('area-input');
+            const priceInput = document.getElementById('price-input');
+            const priceLabel = document.getElementById('price-label');
+            const priceCurrencySymbol = document.getElementById('price-currency-symbol');
+            const utilizationSlider = document.getElementById('utilization-slider');
+            const utilizationValue = document.getElementById('utilization-value');
+            const lowRateInput = document.getElementById('low-rate-input');
+            const highRateInput = document.getElementById('high-rate-input');
+            const lowRateLabel = document.getElementById('low-rate-label');
+            const highRateLabel = document.getElementById('high-rate-label');
+            const rentalScenariosHeader = document.getElementById('rental-scenarios-header');
+            const rentalDurationSlider = document.getElementById('rental-duration-slider');
+            const rentalDurationInput = document.getElementById('rental-duration-input');
+            const roiLowLabel = document.getElementById('roi-low-label');
+            const roiHighLabel = document.getElementById('roi-high-label');
+
+
+            const breakevenLowEl = document.getElementById('breakeven-low');
+            const breakevenHighEl = document.getElementById('breakeven-high');
+            const roiLowEl = document.getElementById('roi-low');
+            const roiHighEl = document.getElementById('roi-high');
+            
+            const tableLowBtn = document.getElementById('table-low-btn');
+            const tableHighBtn = document.getElementById('table-high-btn');
+            const roiTableBody = document.getElementById('roi-table-body');
+            const tableHeaderMonthly = document.getElementById('table-header-monthly-revenue');
+            const tableHeaderTotal = document.getElementById('table-header-total-revenue');
+
+            let currentTableScenario = 'low';
+            let currentCurrency = 'GBP';
+            let initialInvestmentCurrency = 'GBP';
+            
+            const currencyData = {
+                'GBP': { symbol: '£', label: 'GBP', rates: { 'USD': 1.35051, 'EUR': 1.152795, 'GBP': 1.000000, 'AUD': 2.05919, 'CAD': 1.868441, 'NOK': 13.532054, 'NZD': 2.291750, 'AED': 4.959748, 'QAR': 4.915856, 'INR': 119.135505 } },
+                'USD': { symbol: '$', label: 'USD', rates: { 'GBP': 0.74046, 'EUR': 0.85360, 'USD': 1.000000, 'AUD': 1.5247, 'CAD': 1.3835, 'NOK': 10.02, 'NZD': 1.696, 'AED': 3.676, 'QAR': 3.643, 'INR': 88.21 } },
+                'EUR': { symbol: '€', label: 'EUR', rates: { 'GBP': 0.86749, 'USD': 1.17140, 'EUR': 1.000000, 'AUD': 1.7865, 'CAD': 1.6208, 'NOK': 11.738, 'NZD': 1.988, 'AED': 4.301, 'QAR': 4.26, 'INR': 103.35 } },
+                'AUD': { symbol: '$', label: 'AUD', rates: { 'GBP': 0.48567, 'USD': 0.65584, 'EUR': 0.55977, 'AUD': 1.000000, 'CAD': 0.9073, 'NOK': 6.57, 'NZD': 1.113, 'AED': 2.4087, 'QAR': 2.387, 'INR': 57.85 } },
+                'CAD': { symbol: '$', label: 'CAD', rates: { 'GBP': 0.5352, 'USD': 0.7228, 'EUR': 0.6169, 'AUD': 1.1025, 'CAD': 1.000000, 'NOK': 7.24, 'NZD': 1.226, 'AED': 2.654, 'QAR': 2.63, 'INR': 63.78 } },
+                'NOK': { symbol: 'kr', label: 'NOK', rates: { 'GBP': 0.0739, 'USD': 0.0998, 'EUR': 0.0852, 'AUD': 0.1522, 'CAD': 0.1381, 'NOK': 1.000000, 'NZD': 0.1694, 'AED': 0.366, 'QAR': 0.362, 'INR': 8.81 } },
+                'NZD': { symbol: '$', label: 'NZD', rates: { 'GBP': 0.4363, 'USD': 0.5898, 'EUR': 0.503, 'AUD': 0.8984, 'CAD': 0.8156, 'NOK': 5.90, 'NZD': 1.000000, 'AED': 2.164, 'QAR': 2.14, 'INR': 52.02 } },
+                'AED': { symbol: 'د.إ', label: 'AED', rates: { 'GBP': 0.2016, 'USD': 0.2723, 'EUR': 0.2325, 'AUD': 0.4152, 'CAD': 0.3768, 'NOK': 2.73, 'NZD': 0.4621, 'AED': 1.000000, 'QAR': 0.991, 'INR': 24.02 } },
+                'QAR': { symbol: 'ر.ق', label: 'QAR', rates: { 'GBP': 0.2034, 'USD': 0.2749, 'EUR': 0.2346, 'AUD': 0.4182, 'CAD': 0.3791, 'NOK': 2.75, 'NZD': 0.466, 'AED': 1.009, 'QAR': 1.000000, 'INR': 24.23 } },
+                'INR': { symbol: '₹', label: 'INR', rates: { 'GBP': 0.00839, 'USD': 0.01133, 'EUR': 0.00967, 'AUD': 0.0173, 'CAD': 0.01568, 'NOK': 0.1135, 'NZD': 0.01922, 'AED': 0.0416, 'QAR': 0.0412, 'INR': 1.000000 } }
+            };
+
+            const months = (() => {
+                let m = [];
+                for (let i = 1; i <= 24; i++) m.push(i);
+                for (let i = 36; i <= 96; i += 12) m.push(i);
+                return m;
+            })();
+            const chartMonths = Array.from({ length: 97 }, (_, i) => i);
+
+            let priceBaseValue = 121500;
+            let lowRateBaseValue = 1.005;
+            let highRateBaseValue = 1.50;
+
+            const ctx = document.getElementById('roiChart').getContext('2d');
+            const roiChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartMonths,
+                    datasets: [
+                        {
+                            label: 'Min. Rate ROI',
+                            data: [],
+                            borderColor: '#4f46e5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Max. Rate ROI',
+                            data: [],
+                            borderColor: '#d97706',
+                            backgroundColor: 'rgba(217, 119, 6, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(0) + '%';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Cumulative ROI (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Months'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}%`;
+                                }
+                            },
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                    elements: {
+                        line: {
+                            borderWidth: 2
+                        }
+                    }
+                }
+            });
+
+            function updateLabels() {
+                const { symbol, label } = currencyData[currentCurrency];
+                priceLabel.textContent = `Estimated SQM Purchase value (${symbol})`;
+                priceCurrencySymbol.textContent = symbol;
+                lowRateLabel.innerHTML = `Min. Rate<br>(${symbol}/sqm/day)`;
+                highRateLabel.innerHTML = `Max Rate<br>(${symbol}/sqm/day)`;
+                tableHeaderMonthly.textContent = `Monthly Revenue (${label})`;
+                tableHeaderTotal.textContent = `Total Revenue (${label})`;
+            }
+
+            function updateDisplayedValues() {
+                const conversionFactor = currencyData[initialInvestmentCurrency].rates[currentCurrency];
+                priceInput.value = (priceBaseValue * conversionFactor).toFixed(2);
+                lowRateInput.value = (lowRateBaseValue * conversionFactor).toFixed(3);
+                highRateInput.value = (highRateBaseValue * conversionFactor).toFixed(2);
+                calculateAndRender();
+            }
+
+            function calculateAndRender() {
+                const area = parseFloat(areaInput.value) || 0;
+                const utilization = parseFloat(utilizationSlider.value) / 100 || 0;
+                const daysInMonth = 30;
+                const rentalDuration = parseFloat(rentalDurationInput.value) || 0;
+                
+                const conversionFactor = currencyData[initialInvestmentCurrency].rates[currentCurrency];
+                const price = priceBaseValue * conversionFactor;
+                const lowRate = lowRateBaseValue * conversionFactor;
+                const highRate = highRateBaseValue * conversionFactor;
+
+                const monthlyRevenueLow = area * lowRate * daysInMonth * utilization;
+                const monthlyRevenueHigh = area * highRate * daysInMonth * utilization;
+
+                const breakevenMonthsLow = price > 0 && monthlyRevenueLow > 0 ? price / monthlyRevenueLow : Infinity;
+                const breakevenMonthsHigh = price > 0 && monthlyRevenueHigh > 0 ? price / monthlyRevenueHigh : Infinity;
+                
+                const roiCalculatedLow = price > 0 ? ((monthlyRevenueLow * rentalDuration - price) / price) * 100 : Infinity;
+                const roiCalculatedHigh = price > 0 ? ((monthlyRevenueHigh * rentalDuration - price) / price) * 100 : Infinity;
+
+                roiLowLabel.textContent = `${rentalDuration}-Month ROI (Min. Rate)`;
+                roiHighLabel.textContent = `${rentalDuration}-Month ROI (Max. Rate)`;
+                breakevenLowEl.textContent = isFinite(breakevenMonthsLow) ? `${breakevenMonthsLow.toFixed(1)} months` : 'N/A';
+                breakevenHighEl.textContent = isFinite(breakevenMonthsHigh) ? `${breakevenMonthsHigh.toFixed(1)} months` : 'N/A';
+                roiLowEl.textContent = isFinite(roiCalculatedLow) ? `${roiCalculatedLow.toFixed(1)} %` : 'N/A';
+                roiHighEl.textContent = isFinite(roiCalculatedHigh) ? `${roiCalculatedHigh.toFixed(1)} %` : 'N/A';
+
+                const roiDataLow = chartMonths.map(m => price > 0 ? ((monthlyRevenueLow * m - price) / price) * 100 : 0);
+                const roiDataHigh = chartMonths.map(m => price > 0 ? ((monthlyRevenueHigh * m - price) / price) * 100 : 0);
+
+                roiChart.data.datasets[0].data = roiDataLow;
+                roiChart.data.datasets[1].data = roiDataHigh;
+                roiChart.update();
+
+                updateTable(monthlyRevenueLow, monthlyRevenueHigh, price);
+            }
+
+            function updateTable(monthlyRevenueLow, monthlyRevenueHigh, price) {
+                const revenueToUse = currentTableScenario === 'low' ? monthlyRevenueLow : monthlyRevenueHigh;
+                let tableHTML = '';
+                const { symbol } = currencyData[currentCurrency];
+
+                if (price > 0 && revenueToUse > 0) {
+                    months.forEach(month => {
+                        const totalRevenue = revenueToUse * month;
+                        const cumulativeROI = ((totalRevenue - price) / price) * 100;
+                        tableHTML += `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${month}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${symbol}${monthlyRevenueLow.toFixed(2)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${symbol}${totalRevenue.toFixed(2)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm ${cumulativeROI >= 0 ? 'text-green-600' : 'text-red-600'}">${cumulativeROI.toFixed(2)}%</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tableHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">Enter valid inputs to see data.</td></tr>`;
+                }
+                roiTableBody.innerHTML = tableHTML;
+            }
+
+            areaSlider.addEventListener('input', (e) => {
+                areaInput.value = e.target.value;
+                calculateAndRender();
+            });
+            areaInput.addEventListener('input', (e) => {
+                areaSlider.value = e.target.value;
+                calculateAndRender();
+            });
+            utilizationSlider.addEventListener('input', (e) => {
+                utilizationValue.textContent = `${e.target.value}%`;
+                calculateAndRender();
+            });
+            rentalDurationSlider.addEventListener('input', (e) => {
+                rentalDurationInput.value = e.target.value;
+                calculateAndRender();
+            });
+            rentalDurationInput.addEventListener('input', (e) => {
+                rentalDurationSlider.value = e.target.value;
+                calculateAndRender();
+            });
+
+            priceInput.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                if (isFinite(value)) {
+                    priceBaseValue = value / currencyData[initialInvestmentCurrency].rates[currentCurrency];
+                }
+                calculateAndRender();
+            });
+            lowRateInput.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                if (isFinite(value)) {
+                    lowRateBaseValue = value / currencyData[initialInvestmentCurrency].rates[currentCurrency];
+                }
+                calculateAndRender();
+            });
+            highRateInput.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                if (isFinite(value)) {
+                    highRateBaseValue = value / currencyData[initialInvestmentCurrency].rates[currentCurrency];
+                }
+                calculateAndRender();
+            });
+            
+            tableLowBtn.addEventListener('click', () => {
+                currentTableScenario = 'low';
+                tableLowBtn.classList.add('bg-indigo-600', 'text-white', 'shadow');
+                tableLowBtn.classList.remove('bg-transparent', 'text-gray-600');
+                tableHighBtn.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+                tableHighBtn.classList.add('bg-transparent', 'text-gray-600');
+                calculateAndRender();
+            });
+
+            tableHighBtn.addEventListener('click', () => {
+                currentTableScenario = 'high';
+                tableHighBtn.classList.add('bg-indigo-600', 'text-white', 'shadow');
+                tableHighBtn.classList.remove('bg-transparent', 'text-gray-600');
+                tableLowBtn.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+                tableLowBtn.classList.add('bg-transparent', 'text-gray-600');
+                calculateAndRender();
+            });
+            
+            document.querySelectorAll('#currency-usd-btn, #currency-gbp-btn, #currency-eur-btn, #currency-inr-btn, #currency-aud-btn, #currency-cad-btn, #currency-nok-btn, #currency-nzd-btn, #currency-aed-btn, #currency-qar-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const newCurrency = btn.id.split('-')[1].toUpperCase();
+                    if (newCurrency !== currentCurrency) {
+                        currentCurrency = newCurrency;
+                        
+                        document.querySelectorAll('#currency-usd-btn, #currency-gbp-btn, #currency-eur-btn, #currency-inr-btn, #currency-aud-btn, #currency-cad-btn, #currency-nok-btn, #currency-nzd-btn, #currency-aed-btn, #currency-qar-btn').forEach(b => {
+                            b.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+                            b.classList.add('bg-transparent', 'text-gray-600');
+                        });
+                        btn.classList.add('bg-indigo-600', 'text-white', 'shadow');
+                        btn.classList.remove('bg-transparent', 'text-gray-600');
+                        
+                        updateLabels();
+                        updateDisplayedValues();
+                    }
+                });
+            });
+
+            updateDisplayedValues();
+        });
+    </script>
+</body>
+</html>

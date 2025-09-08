@@ -75,7 +75,7 @@
                     </div>
                     
                     <div>
-                        <label for="area" class="block text-sm font-medium text-gray-700">Total Area (sqm)</label>
+                        <label for="area" class="block text-sm font-medium text-gray-700">Total Area Inventory(sqm)</label>
                         <div class="flex items-center gap-4 mt-2">
                             <input type="range" id="area-slider" min="50" max="1000" value="200" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb">
                             <input type="number" id="area-input" value="200" class="w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
@@ -83,7 +83,7 @@
                     </div>
                     
                     <div>
-                        <label id="price-label" for="price-input" class="block text-sm font-medium text-gray-700">Estimated SQM Purchase value (£)</label>
+                        <label id="price-label" for="price-input" class="block text-sm font-medium text-gray-700">Enter Estimated Purchase Value For Above SQM area (£)</label>
                         <div class="relative mt-2">
                             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                               <span id="price-currency-symbol" class="text-gray-500 sm:text-sm">£</span>
@@ -93,7 +93,7 @@
                     </div>
 
                     <div>
-                        <label for="utilization" class="block text-sm font-medium text-gray-700">Rental Utilization Rate</label>
+                        <label for="utilization" class="block text-sm font-medium text-gray-700">Rental Utilization Rate (%) </label>
                         <div class="flex items-center gap-4 mt-2">
                             <input type="range" id="utilization-slider" min="10" max="100" value="80" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb">
                             <span id="utilization-value" class="font-semibold text-indigo-600 w-12 text-right">80%</span>
@@ -101,7 +101,7 @@
                     </div>
 
                     <div>
-                        <label for="rental-duration-input" class="block text-sm font-medium text-gray-700">Rental Duration (Months)</label>
+                        <label for="rental-duration-input" class="block text-sm font-medium text-gray-700">Rental Duration (Cumulative Months)</label>
                         <div class="flex items-center gap-4 mt-2">
                             <input type="range" id="rental-duration-slider" min="1" max="120" value="24" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb">
                             <input type="number" id="rental-duration-input" value="24" class="w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
@@ -117,7 +117,7 @@
                                 <input type="number" id="low-rate-input" value="1.005" step="0.001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                             </div>
                             <div>
-                                <label id="high-rate-label" for="high-rate-input" class="block text-sm font-medium text-gray-700">Max Rate<br>(£/sqm/day)</label>
+                                <label id="high-rate-label" for="high-rate-input" class="block text-sm font-medium text-gray-700">Max. Rate<br>(£/sqm/day)</label>
                                 <p class="text-gray-500 text-xs mt-1 mb-1">Enter Value:</p>
                                 <input type="number" id="high-rate-input" value="1.50" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                             </div>
@@ -132,13 +132,13 @@
                         <h4 class="font-semibold text-gray-500 text-sm">Breakeven (Min. Rate)</h4>
                         <p id="breakeven-low" class="text-2xl font-bold text-indigo-600 mt-1">-- months</p>
                     </div>
+                     <div class="bg-white p-4 rounded-xl shadow">
+                        <h4 id="roi-low-label" class="font-semibold text-gray-500 text-sm">-- Month ROI (Min. Rate)</h4>
+                        <p id="roi-low" class="text-2xl font-bold text-indigo-600 mt-1">-- %</p>
+                    </div>
                     <div class="bg-white p-4 rounded-xl shadow">
                         <h4 class="font-semibold text-gray-500 text-sm">Breakeven (Max. Rate)</h4>
                         <p id="breakeven-high" class="text-2xl font-bold text-amber-600 mt-1">-- months</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl shadow">
-                        <h4 id="roi-low-label" class="font-semibold text-gray-500 text-sm">-- Month ROI (Min. Rate)</h4>
-                        <p id="roi-low" class="text-2xl font-bold text-indigo-600 mt-1">-- %</p>
                     </div>
                     <div class="bg-white p-4 rounded-xl shadow">
                         <h4 id="roi-high-label" class="font-semibold text-gray-500 text-sm">-- Month ROI (Max. Rate)</h4>
@@ -149,6 +149,7 @@
                 <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg">
                      <h3 class="text-lg font-bold mb-4">Cumulative ROI Over Time</h3>
                      <p class="text-sm text-gray-600 mb-4">This chart projects the cumulative Return on Investment for both rental scenarios over a 96-month period. The point where a line crosses the 0% axis indicates the breakeven point for that scenario.</p>
+                    <p class="text-sm text-gray-600 mb-4">“Use the legend to toggle series. Deselect one to view only the other.”</p>
                     <div class="chart-container w-full h-96 max-h-[450px] mx-auto">
                         <canvas id="roiChart"></canvas>
                     </div>
